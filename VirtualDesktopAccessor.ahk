@@ -1,4 +1,5 @@
-﻿; AutoHotkey v1 script
+; AutoHotkey v1 script
+
 
 ; Get hwnd of AutoHotkey window, for listener
 
@@ -131,6 +132,121 @@ OnChangeDesktop(wParam, lParam, msg, hwnd) {
 
 
 
+
+
+!g::
+{
+        MoveOrGotoDesktopNumber(9)
+        Run, "E:\epic game\Epic Games\Launcher\Portal\Binaries\Win32\EpicGamesLauncher.exe"
+        Run, "C:\Users\prajw\OneDrive\Desktop\NitroSense.lnk"
+}
+Return
+
+
+CloseAllApplications() {
+    WinGet, id, list,,, Program Manager
+    Loop, %id%
+    {
+        this_id := id%A_Index%
+        if (this_id = A_ScriptHwnd) {
+            continue
+        }
+        WinGetTitle, this_title, ahk_id %this_id%
+        if (this_title != "") {
+            WinClose, ahk_id %this_id%
+        }
+    }
+    
+    Sleep, 1000 ; Wait for applications to exit gracefully
+    
+    ; Force close remaining windows that did not close (e.g. pgAdmin "close tab" prompts, VS, etc.)
+    WinGet, id, list,,, Program Manager
+    Loop, %id%
+    {
+        this_id := id%A_Index%
+        if (this_id = A_ScriptHwnd) {
+            continue
+        }
+        WinGetTitle, this_title, ahk_id %this_id%
+        if (this_title != "") {
+            WinGet, this_pid, PID, ahk_id %this_id%
+            if (this_pid) {
+                Process, Close, %this_pid%
+            }
+        }
+    }
+}
+
+CleanBrowserSessions() {
+    localAppDataPath := A_LocalAppData
+    if (localAppDataPath = "") {
+        EnvGet, localAppDataPath, LocalAppData
+    }
+    
+    profiles := [ "Google\Chrome\User Data\Default"
+                , "BraveSoftware\Brave-Browser\User Data\Default"
+                , "Microsoft\Edge\User Data\Default"
+                , "Perplexity\Comet\User Data\Default" ]
+                
+    for index, relPath in profiles {
+        profilePath := localAppDataPath . "\" . relPath
+        
+        ; Delete all files in the Sessions directory
+        FileDelete, %profilePath%\Sessions\*
+        
+        ; Delete legacy session files if they exist
+        FileDelete, %profilePath%\Current Session
+        FileDelete, %profilePath%\Current Tabs
+        FileDelete, %profilePath%\Last Session
+        FileDelete, %profilePath%\Last Tabs
+    }
+}
+
+!q::
+{
+    ToolTip, Closing all applications and cleaning sessions...
+    CloseAllApplications()
+    Sleep, 2000 ; Wait for applications to exit and release file locks
+    CleanBrowserSessions()
+    ToolTip
+}
+Return
+
+!w::
+{
+    ; 1. Open pgAdmin
+    Run, "C:\Program Files\PostgreSQL\17\pgAdmin 4\runtime\pgAdmin4.exe"
+
+    ; 2. Switch to Windows 2 (Desktop 1)
+    GoToDesktopNumber(1)
+    Sleep, 1000 ; Wait for desktop switch
+    
+    ; 3. Open Visual Studio and Visual Studio Code
+    Run, "C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\devenv.exe"
+    Run, "C:\Users\prajw\AppData\Local\Programs\Microsoft VS Code\Code.exe"
+    
+    ; 4. Wait for 5 seconds
+    Sleep, 2000
+   
+    
+    ; 5. Switch to Windows 1 (Desktop 0)
+    GoToDesktopNumber(0)
+    Sleep, 1000 ; Wait for desktop switch
+    
+    ; 6. Open Comet and navigate to the Teams link
+    TeamsLink := "https://teams.microsoft.com/" ; Replace with your specific Teams link if needed
+    Run, "C:\Users\prajw\AppData\Local\Perplexity\Comet\Application\comet.exe" "%TeamsLink%"
+    
+    ; 7. Wait for 5 seconds
+    Sleep, 2000
+
+    
+    ; 9. Switch to Windows 2 (Desktop 1)
+    GoToDesktopNumber(1)
+    Sleep, 1000 ; Wait for desktop switch
+    
+}
+Return
 
 !t::
 {
